@@ -2,7 +2,7 @@
 Contributors: TheTomThorogood
 Tags: jQuery, JavaScript, Corner, Flip, Peel
 Requires at least: 1.5.0
-Tested up to: 3.0-beta2
+Tested up to: 3.2
 Stable tag: trunk
 
 Adds a page peel affect to the top right corner of the page using only jQuery no buggy hard to customize flash!
@@ -11,7 +11,7 @@ Adds a page peel affect to the top right corner of the page using only jQuery no
 
 Adds a page peel affect to the top right corner of the page using only jQuery no buggy, hard to customize flash!
 
-Based on [Simple Page Peel Effect with jQuery & CSS](http://www.sohtanaka.com/web-design/simple-page-peel-effect-with-jquery-css/ "") by Soh Tanaka.
+Based on [Simple Page Peel Effect with jQuery & CSS (Archive)](http://web.archive.org/web/20110423063645/http://www.sohtanaka.com/web-design/simple-page-peel-effect-with-jquery-css/ "") by Soh Tanaka.
 
 == Installation ==
 
@@ -41,6 +41,9 @@ Partially. It will be positioned correct but it will not display properly unless
 As of Version 1.3.1 there is an option in the admin interface to change it.
 
 == Changelog ==
+
+= 1.3.2 =
+* Fixed max-width bug.
 
 = 1.3.1 =
 * Added z-index option.
