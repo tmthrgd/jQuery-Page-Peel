@@ -1,6 +1,6 @@
 === jQuery Page Peel ===
 Contributors: TheTomThorogood
-Tags: jQuery, Corner, Flip, Peel
+Tags: jQuery, JavaScript, Corner, Flip, Peel
 Requires at least: 1.5.0
 Tested up to: 3.0-beta2
 Stable tag: trunk
@@ -36,7 +36,15 @@ Yes. Follow the instructions found on the options page.
 
 Partially. It will be positioned correct but it will not display properly unless you have an ie6pngfix.htc file setup.
 
+= The image goes behind other content, how can i fix it? =
+
+As of Version 1.3.1 there is an option in the admin interface to change it.
+
 == Changelog ==
+
+= 1.3.1 =
+* Added z-index option.
+* Fixed image dimensions.
 
 = 1.3 =
 * Complete code rewrite.

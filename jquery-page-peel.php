@@ -4,8 +4,8 @@ Author: Tom Thorogood
 Author URI: http://tom-thorogood.gotdns.com/
 Description: Adds a page peel affect to the top right corner of the page using only jQuery no buggy, hard to customize flash!
 Plugin Name: jQuery Page Peel
-Plugin URI: http://tom-thorogood.gotdns.com/wordpress-plugins/jquery-page-peel/
-Version: 1.3
+Plugin URI: http://tom-thorogood.gotdns.com/plugins/jquery-page-peel/
+Version: 1.3.1
 */
 
 /*
@@ -47,7 +47,7 @@ class jQuery_page_peel {
 	@return string plugin_version
 	*/
 	static function version() {
-		return '1.3';
+		return '1.3.1';
 	}
 
 	/*
@@ -68,11 +68,11 @@ class jQuery_page_peel {
 			self::set_option('version', self::version());
 		}
 		self::add_option('version', self::version());
-		self::add_option('link', '/feed/');
-		self::add_option('rel');
-		self::add_option('target', '_blank');
-		self::add_option('onclick');
-		if (!function_exists('wp_enqueue_script')) { @deactivate_plugins(basename(__FILE__)); return; }
+		self::add_option('link', self::default_option('link'));
+		self::add_option('rel', self::default_option('rel'));
+		self::add_option('target', self::default_option('target'));
+		self::add_option('onclick', self::default_option('onclick'));
+		self::add_option('z-index', self::default_option('z-index'));
 		wp_enqueue_script('jquery');
 		add_action('admin_head', array(__CLASS__, '_admin_head'));
 		add_action('admin_menu', array(__CLASS__, '_admin_menu'));
@@ -95,10 +95,14 @@ class jQuery_page_peel {
 	@access private
 	@since 1.3
 	@param string $name option_name
+	@param boolean $htmlentites run htmlentities on the option_value @since 1.3.1
 	@return string option_value
 	*/
-	private static function get_option($name) {
-		return stripslashes(get_option('jQuery-page-peel-' . $name));
+	private static function get_option($name, $htmlentities = false) {
+		$option = stripslashes(get_option('jQuery-page-peel-' . $name));
+		$htmlentities && $option = htmlentities($option);
+		return $option;
+
 	}
 	
 	/*
@@ -112,6 +116,23 @@ class jQuery_page_peel {
 		update_option('jQuery-page-peel-' . $name, $value);
 	}
 	
+	/*
+	@access private
+	@since 1.3.1
+	@param string $name option_name
+	@return string option_default_value
+	*/
+	private static function default_option($name) {
+		$options = array(
+			'link' => 'feed',
+			'rel' => '',
+			'target' => '_blank',
+			'onclick' => '',
+			'z-index' => '99'
+			);
+		return (isset($options[$name]) ? $options[$name] : '');
+	}
+
 	/*
 	@access private
 	@since 1.3
@@ -130,7 +151,7 @@ class jQuery_page_peel {
 	*/
 	private static function cwu() {
 		defined('WP_PLUGIN_URL') && $url = WP_PLUGIN_URL . '/' . basename(dirname(__FILE__));
-		(isset($url) && $url != '/' . basename(dirname(__FILE__))) || $url = str_replace('\\', '/', ((strtolower($_SERVER['HTTPS']) == 'on') ? 'https://' : 'http://') . ((isset($_SERVER['HTTP_HOST']) && !empty($_SERVER['HTTP_HOST'])) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']) . ((strtolower($_SERVER['HTTPS']) == 'on' && $_SERVER['SERVER_PORT'] == 443 || strtolower($_SERVER['HTTPS']) != 'on' && $_SERVER['SERVER_PORT'] == 80) ? '' : ':'.$_SERVER['SERVER_PORT']) . substr(dirname(__FILE__), strlen($_SERVER['DOCUMENT_ROOT'])));
+		isset($url) || $url = str_replace('\\', '/', ((strtolower($_SERVER['HTTPS']) == 'on') ? 'https://' : 'http://') . ((isset($_SERVER['HTTP_HOST']) && !empty($_SERVER['HTTP_HOST'])) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME']) . ((strtolower($_SERVER['HTTPS']) == 'on' && $_SERVER['SERVER_PORT'] == 443 || strtolower($_SERVER['HTTPS']) != 'on' && $_SERVER['SERVER_PORT'] == 80) ? '' : ':'.$_SERVER['SERVER_PORT']) . substr(dirname(__FILE__), strlen($_SERVER['DOCUMENT_ROOT'])));
 		return $url;
 	}
 
@@ -147,16 +168,19 @@ class jQuery_page_peel {
 	@access private
 	@since 1.3
 	@param string file
+	@param boolean $htmlentites run htmlentities on the url @since 1.3.1
 	@return string full_url
 	*/
-	private static function url($file = '') {
+	private static function url($file = '', $htmlentities = false) {
 		switch (strtolower($file)) {
 			case 'underlay.png':
 				self::custom_image() && $file = 'custom_underlay.png';
 				break;
 		}
 		empty($file) || $file = '/' . $file;
-		return self::cwu() . $file;
+		$url = self::cwu() . $file;
+		$htmlentities && $url = htmlentities($url);
+		return $url;
 	}
 	
 	/*
@@ -177,8 +201,9 @@ class jQuery_page_peel {
 	@return undefined
 	*/
 	static function _admin_menu() {
-		if (!function_exists('add_options_page')) { @deactivate_plugins(basename(__FILE__)); return; }
-		add_options_page('jQuery Page Peel', 'jQuery Page Peel', 'manage_options', __FILE__, array(__CLASS__, '_options_page'));
+		if (function_exists('add_options_page')) {
+			add_options_page('jQuery Page Peel', 'jQuery Page Peel', 'manage_options', __FILE__, array(__CLASS__, '_options_page'));
+		}
 	}
 
 	/*
@@ -188,6 +213,7 @@ class jQuery_page_peel {
 	*/
 	static function _admin_head() {
 ?>
+<!--jQuery Page Peel - <?php echo self::version(); ?>: http://tom-thorogood.gotdns.com/plugins/jquery-page-peel/-->
 <style type="text/css">
 /* <![CDATA[ */
 .jQuery-page-peel .red {
@@ -215,6 +241,7 @@ class jQuery_page_peel {
 }
 /* ]]> */
 </style>
+<!--/jQuery Page Peel-->
 <?php
 	}
 
@@ -224,12 +251,25 @@ class jQuery_page_peel {
 	@return undefined
 	*/
 	static function _options_page() {
+		if (isset($_POST['jQuery-page-peel-reset'])) {
+			if (!function_exists('check_admin_referer') || check_admin_referer(__FILE__ . self::version())) {
+				self::set_option('link', self::default_option('link'));
+				self::set_option('rel', self::default_option('rel'));
+				self::set_option('target', self::default_option('target'));
+				self::set_option('onclick', self::default_option('onclick'));
+				self::set_option('z-index', self::default_option('z-index'));
+				
+				echo "\t" . '<div class="updated"><p>Options reset.</p></div>';
+			}
+		}
+
 		if (isset($_POST['jQuery-page-peel-submit'])) {
 			if (!function_exists('check_admin_referer') || check_admin_referer(__FILE__ . self::version())) {
 				isset($_POST['jQuery-page-peel-link']) && self::set_option('link', $_POST['jQuery-page-peel-link']);
 				isset($_POST['jQuery-page-peel-rel']) && self::set_option('rel', $_POST['jQuery-page-peel-rel']);
 				isset($_POST['jQuery-page-peel-target']) && self::set_option('target', $_POST['jQuery-page-peel-target']);
 				isset($_POST['jQuery-page-peel-onclick']) && self::set_option('onclick', $_POST['jQuery-page-peel-onclick']);
+				isset($_POST['jQuery-page-peel-z-index']) && self::set_option('z-index', $_POST['jQuery-page-peel-z-index']);
 				
 				echo "\t" . '<div class="updated"><p>Options saved successfully.</p></div>';
 			}
@@ -255,31 +295,37 @@ class jQuery_page_peel {
 					<tr><td>&nbsp;</td></tr>
 					<tr>
 						<th scope="row">href attribute:</th>
-						<td><input name="jQuery-page-peel-link" type="text" value="<?php echo htmlentities(self::get_option('link')); ?>" /> The <acronym title="Uniform Resource Locator">URL</acronym> to use in the link. <small>eg. http://tom-thorogood.gotdns.com, /feed/, #top</small> <a href="http://www.w3schools.com/tags/att_a_href.asp" target="_blank">#</a></td>
+						<td><input name="jQuery-page-peel-link" type="text" value="<?php echo self::get_option('link', true); ?>" /> The <acronym title="Uniform Resource Locator">URL</acronym> to use in the link. <small>eg. http://tom-thorogood.gotdns.com, /feed/, #top</small> <a href="http://www.w3schools.com/tags/att_a_href.asp" target="_blank">#</a></td>
 					</tr>
 					<tr>
 						<th scope="row">rel attribute:</th>
-						<td><input name="jQuery-page-peel-rel" type="text" value="<?php echo htmlentities(self::get_option('rel')); ?>" /> The relationship between this site and the link. <small>eg. nofollow, external,nofollow</small> <a href="http://www.w3schools.com/tags/att_a_rel.asp" target="_blank">#</a></td>
+						<td><input name="jQuery-page-peel-rel" type="text" value="<?php echo self::get_option('rel', true); ?>" /> The relationship between this site and the link. <small>eg. nofollow, external,nofollow</small> <a href="http://www.w3schools.com/tags/att_a_rel.asp" target="_blank">#</a></td>
 					</tr>
 					<tr>
 						<th scope="row">target attribute:</th>
-						<td><input name="jQuery-page-peel-target" type="text" value="<?php echo htmlentities(self::get_option('target')); ?>" /> The target of the link. <small>eg. _blank, _top</small> <a href="http://www.w3schools.com/tags/att_a_target.asp" target="_blank">#</a></td>
+						<td><input name="jQuery-page-peel-target" type="text" value="<?php echo self::get_option('target', true); ?>" /> The target of the link. <small>eg. _blank, _top</small> <a href="http://www.w3schools.com/tags/att_a_target.asp" target="_blank">#</a></td>
 					</tr>
 					<tr>
 						<th scope="row">onclick attribute:</th>
-						<td><input name="jQuery-page-peel-onclick" type="text" value="<?php echo htmlentities(self::get_option('onclick')); ?>" /> Javascript to execute when the link is clicked. <small>eg. alert('Test');return false;</small> <a href="http://www.w3schools.com/tags/ref_eventattributes.asp" target="_blank">#</a></td>
+						<td><input name="jQuery-page-peel-onclick" type="text" value="<?php echo self::get_option('onclick', true); ?>" /> Javascript to execute when the link is clicked. <small>eg. alert('Test');return false;</small> <a href="http://www.w3schools.com/tags/ref_eventattributes.asp" target="_blank">#</a></td>
+					</tr>
+					<tr><td>&nbsp;</td></tr>
+					<tr>
+						<th scope="row">z-index:</th>
+						<td><input name="jQuery-page-peel-z-index" type="text" value="<?php echo self::get_option('z-index', true); ?>" /> The z-index of the page peel div, increase if the images go behind other site content. <small>Numeric values only.</small></td>
 					</tr>
 					<tr><td>&nbsp;</td></tr>
 					<tr>
 						<th scope="row">Image:</th>
 						<td>
-							To replace the default image upload a png <code>(image/png)</code> image <code>(307px x 319px)</code> to <code><?php echo htmlentities(str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, self::cwd() . '/custom_underlay.png')); ?></code>.
-							<p class="<?php if (self::custom_image()) { echo 'green">Currently using your custom image:'; } else { echo 'red">Currently using the default image:'; } ?><br /><img src="<?php echo htmlentities(self::url('underlay.png')); ?>" alt="" /></p>
+							To replace the default image upload a png <code>(image/png)</code> image <code>(307px x 308px)</code> to <code><?php echo htmlentities(str_replace(array('/', '\\'), DIRECTORY_SEPARATOR, self::cwd() . '/custom_underlay.png')); ?></code>.
+							<p class="<?php if (self::custom_image()) { echo 'green">Currently using your custom image:'; } else { echo 'red">Currently using the default image:'; } ?><br /><img src="<?php echo self::url('underlay.png', true); ?>" alt="" /></p>
 						</td>
 					</tr>
 					<tr><td>&nbsp;</td></tr>
 					<tr>
 						<th><input type="submit" class="button-primary" name="jQuery-page-peel-submit" value="Save" /></th>
+						<td><input type="submit" class="button-primary" name="jQuery-page-peel-reset" value="Reset" onclick="return confirm('WARNING: This will reset ALL options, are you sure want to continue?');" /></td>
 					</tr>
 					</table>
 			</fieldset>
@@ -296,14 +342,14 @@ class jQuery_page_peel {
 	*/
 	static function _head() {
 ?>
-<!--jQuery Page Peel - <?php echo self::version(); ?>: http://tom-thorogood.gotdns.com/plugins/jquery-page-peel/#v-<?php echo self::version(); ?>-->
+<!--jQuery Page Peel - <?php echo self::version(); ?>: http://tom-thorogood.gotdns.com/plugins/jquery-page-peel/-->
 <style type="text/css">
 /* <![CDATA[ */
 #jQuery-page-peel {
 	position:fixed;
 	right:0;
 	top:0;
-	z-index:99;
+	z-index:<?php echo self::get_option('z-index'); ?>;
 }
 #jQuery-page-peel .overlay {
 	width:50px;
@@ -323,7 +369,7 @@ class jQuery_page_peel {
 	right:0;
 	z-index:1;
 	border:none;
-	background:url('<?php echo htmlentities(self::url('underlay.png')); ?>') no-repeat right top;
+	background:url('<?php echo self::url('underlay.png', true); ?>') no-repeat right top;
 }
 /* ]]> */
 </style>
@@ -360,10 +406,10 @@ jQuery(document).ready(function() {
 	*/
 	static function _footer() {
 ?>
-<!--jQuery Page Peel - <?php echo self::version(); ?>: http://tom-thorogood.gotdns.com/plugins/jquery-page-peel/#v-<?php echo self::version(); ?>-->
+<!--jQuery Page Peel - <?php echo self::version(); ?>: http://tom-thorogood.gotdns.com/plugins/jquery-page-peel/-->
 <div id="jQuery-page-peel">
-	<a href="<?php echo htmlentities(self::get_option('link')); ?>" target="<?php echo htmlentities(self::get_option('target')); ?>" rel="<?php echo htmlentities(self::get_option('rel')); ?>" onclick="<?php echo htmlentities(self::get_option('onclick')); ?>">
-		<img src="<?php echo htmlentities(self::url('overlay.png')); ?>" class="overlay" width="307" height="319" alt="" />
+	<a href="<?php echo self::get_option('link', true); ?>" target="<?php echo self::get_option('target', true); ?>" rel="<?php echo self::get_option('rel', true); ?>" onclick="<?php echo self::get_option('onclick', true); ?>">
+		<img src="<?php echo self::url('overlay.png', true); ?>" class="overlay" width="307" height="319" alt="" />
 		<span class="underlay"></span>
 	</a>
 </div>
