@@ -35,6 +35,9 @@ Yes. All you need to do is replace img.png with your image.
 
 == Changelog ==
 
+= 1.2 =
+* Fixed a bug that could cause issues with other plugins.
+
 = 1.1 =
 * Cleaned up the code.
 
